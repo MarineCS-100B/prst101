@@ -2,109 +2,68 @@ library(marinecs100b)
 library(tidyverse)
 
 
-# Frequency of occurence --------------------------------------------------
+# Frequency of occurrence -------------------------------------------------
 
-predator_scale <- cctd_meso %>%
-  group_by(predator_id, predator_scientific_name) %>%
-  summarize(any_meso = any(meso_prey),
-            any_cpf = any(cpf_prey),
-            .groups = "drop")
+# P1 Filter cctd_meso to rows representing the predator with id 99112. What was
+# species was the predator? How many prey items were in their diet sample? How
+# many of those prey were mesopelagic or coastal pelagic fish species?
 
-species_scale <- predator_scale %>%
-  group_by(predator_scientific_name) %>%
-  summarize(fo_meso = mean(any_meso),
-            fo_cpf = mean(any_cpf),
-            n_predators = n())
+# P2 Summarize cctd_meso at the predator level (i.e., each row in the summary
+# should represent one predator), indicating whether the predator’s diet sample
+# contained mesopelagic and/or coastal pelagic fish species. Call the summary
+# columns any_meso and any_cpf.
 
-species_scale %>%
-  # Only retain predator species that ate mesopelagic fish
-  filter(fo_meso > 0) %>%
-  # Flip sign of coastal pelagic FO (for plotting purposes)
-  mutate(fo_cpf = -fo_cpf,
-         # Format name and sample size
-         label = sprintf("%s (%d)", predator_scientific_name, n_predators),
-         # Order labels by descending mesopelagic FO
-         label = fct_reorder(label, fo_meso)) %>%
-  # Rename fo_* columns to human-readable
-  rename(`Coastal pelagic fish` = fo_cpf,
-         `Mesopelagic fish` = fo_meso) %>%
-  # Pivot frequency of occurence columns to long format
-  pivot_longer(ends_with("Fish"), values_to = "fo") %>%
-  # Create column chart
-  ggplot(aes(x = fo, y = label, fill = name)) +
-  geom_col(color = "grey10") +
-  scale_x_continuous("Frequency of occurence", limits = c(-1, 1)) +
-  labs(y = "Predator taxa") +
-  scale_fill_manual("Prey type", values = c("grey70", "navy")) +
-  theme_bw() +
-  theme(axis.text.y = element_text(face = "italic"),
-        legend.position = "inside",
-        legend.position.inside = c(0.99, 0.01),
-        legend.justification = c(1, 0))
-ggsave("~/Downloads/meso_cpf_fo.png", width = 8, height = 6, units = "in")
+# P3 Using the data frame you created in P2, create a species-level summary that
+# contains columns for mesopelagic FO (meso_fo), coastal pelagic fish FO
+# (cpf_fo), and predator sample size (n).
+
+# P4 How many predator species had a mesopelagic FO greater than 0.5? Which of
+# those predator species had the largest sample size?
 
 
-# Simulate order ----------------------------------------------------------
+# Simulating samples ------------------------------------------------------
 
-# How sensitive is the order of these five species to sampling?
 set.seed(123)
 
-# Two species consumed mesopelagic fish more frequently in the CCTD sample than
-# any other taxa: Lissodelphis borealis and Delphinus delphis. In the sample,
-# Lissodelphis had a slightly higher mesopelagic FO than Delphinus. Do you think
-# that relative order reflects the true difference in the population? Why or why
-# not?
+# P5 In the sample, Lissodelphis had a slightly higher mesopelagic FO than
+# Delphinus. Do you think that relative order reflects the true difference in
+# the population? Why or why not?
 
-# Simulate sampling the same number of Lissodelphis borealis and Delphinus
-# delphis stomachs as in the observed sample, keeping the probability of
-# observing mesopelagic fish prey the same as the observed sample. Repeat 1000
-# times. How frequently is the Delphinus mesopelagic fish FO *greater* than the
-# Lissodelphis FO in the simulations (the reverse of the observed order in the
-# sample)?
-lissodelphis_meso <- rbinom(1000,
-                            size = 56,
-                            prob = 0.893)
-lissodelphis_fo <- lissodelphis_meso / 56
-delphinus_meso <- rbinom(1000,
-                         size = 259,
-                         prob = 0.857)
-delphinus_fo <- delphinus_meso / 259
-sum(delphinus_fo > lissodelphis_fo)
+# P6 Fill in the blanks below to simulate 1000 new samples. Keep the size and
+# probabilities the same as the original sample. Of the 1000 simulated samples,
+# what fraction show the wrong order (i.e., mesopelagic FO greater in Delphinus
+# than Lissodelphis)?
 
-# How confident are you that the mesopelagic FO ranks in the observed sample
-# reflect the population as a whole?
+lissodelphis_samples <- rbinom(1000,
+                               size = ???,
+                               prob = ???)
+lissodelphis_fo <- ???
+delphinus_samples <- rbinom(1000,
+                            size = ???,
+                            prob = ???)
+delphinus_fo <- ???
 
-# Mesopelagic fish were found in the stomachs of Histioteuthidae and Dosidicus
-# gigas at very similar frequencies - 0.553 compared to 0.522. The sample
-# contained far more Dosidicus than Histioteuthidae, though - 1136 Dosidicus
-# compared to 47 Histioteuthidae. If you were to get new samples of the same
-# size for these two taxa, which FO do you think would change more?
+wrong_order <- ???
 
-# Simulate the Histioteuthidae and Dosidicus samples (keeping size and
-# probability the same as the observed sample) 1000 times and calculate the FO.
-histioteuthidae_random <- rbinom(1000, size = 47, prob = 0.553)
-histioteuthidae_fo <- histioteuthidae_random / 47
-dosidicus_random <- rbinom(1000, size = 1136, prob = 0.522)
-dosidicus_fo <- dosidicus_random / 1136
+# P7 How does your result in P6 influence your confidence in the sample result
+# that Lissodelphis consume mesopelagic prey more frequently than Delphinus?
 
-# What's the mean FO across simulations for the two taxa? How does that compare
-# to the original sample?
+# P8 If you were to get new samples of the same size for these two taxa, which
+# mesopelagic FO do you think would change more? Why?
 
-mean(histioteuthidae_fo)
-mean(dosidicus_fo)
+# P9 Generate 1000 new simulated samples for Histioteuthidae and Dosidicus
+# gigas, keeping the sample sizes and probabilities the same.
 
-# What's the standard deviation of FO across simulations for the two taxa?
+# P10 What’s the mean mesopelagic FO of the 1000 Histioteuthidae simulated
+# samples? How about Dosidicus gigas? How do these means compare to the original
+# sample?
 
-sd(histioteuthidae_fo)
-sd(dosidicus_fo)
+# P11 What’s the standard deviation of mesopelagic FO across simulated samples
+# for the two taxa?
 
-# How frequently did Histioteuthidae FO fall outside the range 0.45 - 0.65? How
-# about Dosidicus?
+# P12 How frequently did Histioteuthidae mesopelagic FO fall outside the range
+# 0.45 - 0.65? How about Dosidicus gigas?
 
-sum(histioteuthidae_fo > 0.65)
-sum(histioteuthidae_fo < 0.45)
-sum(dosidicus_fo > 0.65)
-sum(dosidicus_fo < 0.45)
+# P13 Based on your answers to P10-P12, what effect does sample size have on
+# sample accuracy?
 
-# Based on the previous problems, describe the effect of sample size on the
-# accuracy of a sample.
